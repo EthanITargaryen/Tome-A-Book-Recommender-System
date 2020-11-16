@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+div {
+  max-width: 500px;
+  height: 100px;
+  background-color: powderblue;
+}
+
+{% block title %}Evaluation{% endblock %}
+{% block page_content %}
+    <br/>
+    <h5>You're evaluating</h5>
+    <h1><a style="text-decoration: None; color: black;" onmouseover="this.style.backgroundColor='#006db9'"
+                       onmouseout="this.style.backgroundColor=''"
+                       href={{ url_for('book', b_id = title) }}> {{ title }} </a></h1>
+    <br/> <br/>
+    <div class="page-header" style="width: 650px; font-size: 13pt">
+        {{ wtf.quick_form(form) }}
+    </div>
+{% endblock %}

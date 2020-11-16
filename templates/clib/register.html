@@ -1,0 +1,102 @@
+{% extends 'clib/index.html' %}
+
+{% block reglog %}<!-- Sign up form -->
+    <section class="signup">
+        <div class="container">
+            <div class="signup-content">
+                <div class="signup-form">
+                    <h2 class="form-title">Sign up</h2>
+                    <form method="POST" class="register-form" id="register-form">
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="name"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                    <input required type="text" name="fname" id="fname" placeholder="Full Name"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="uname"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                    <input required type="text" name="uname" id="uname" placeholder="Username"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ht"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                    <input required type="text" name="ht" id="ht" placeholder="Hometown"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="img"><i class="zmdi zmdi-image"> </i></label>
+                                    <input required type="url" name="iurl" id="iurl" placeholder="Image URL">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email"><i class="zmdi zmdi-email"></i></label>
+                                    <input required type="email" name="email" id="email" placeholder="Your Email"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pass"><i class="zmdi zmdi-lock"></i></label>
+                                    <input required type="password" name="pass" id="pass" placeholder="Password"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="re-pass"><i class="zmdi zmdi-lock-outline"></i></label>
+                                    <input required type="password" name="re_pass" id="re_pass"
+                                           placeholder="Repeat your password"/>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <br/>Date of Birth <br/>
+                                <div class="form-group">
+                                    <label for="dob"><i class="zmdi zmdi-calendar"></i></label>
+                                    <input required type="date" name="dob" id="dob" placeholder="Date of Birth"/>
+                                </div>
+                                Gender <br/> <br/>
+                                <div class="form-group form-check-inline">
+                                    <input class="form-check-input" type="radio" name="exampleRadios"
+                                           id="exampleRadios1" value="male"
+                                           placeholder="Male">
+                                    <label for="exampleRadios1">
+                                        Male
+                                    </label>
+                                </div>
+                                <div class="form-group form-check-inline">
+                                    <input class="form-check-input" type="radio" name="exampleRadios"
+                                           id="exampleRadios2" value="female">
+                                    <label class="form-check-label" for="exampleRadios2">
+                                        Female
+                                    </label>
+                                </div>
+                                <div class="form-group form-check-inline">
+                                    <input class="form-check-input" type="radio" name="exampleRadios"
+                                           id="exampleRadios3" value="O" checked>
+                                    <label class="form-check-label" for="exampleRadios3">
+                                        Other
+                                    </label>
+                                </div>
+                            </div>
+
+                            <br/> <br/> <br/>
+
+                            <div class="form-group">
+                                <input type="checkbox" name="agree-term" id="agree-term" class="agree-term"/>
+                                <label for="agree-term" class="label-agree-term"><span><span></span></span>I agree all
+                                    statements in <a href="#" class="term-service">Terms of service</a></label>
+                            </div>
+                            <div class="form-group form-button">
+                                <input type="submit" name="signup" id="signup" class="form-submit" value="Register"/>
+                            </div>
+
+                        </div>
+
+
+
+                    </form>
+                </div>
+                <div class="signup-image">
+                    <h1>Welcome to BRS!</h1>
+
+                    <figure><img src="static/clib/images/books.jpeg"
+                                 height="1600px" width="400px"
+                                 alt="sing up image"></figure>
+
+                    <a href="#" class="signup-image-link">I am already member</a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

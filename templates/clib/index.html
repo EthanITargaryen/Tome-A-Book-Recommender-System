@@ -1,0 +1,41 @@
+<!--
+    clib
+    static/clib/
+-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Form</title>
+
+    <!-- Font Icon -->
+    <link rel="stylesheet" href="static/clib/fonts/material-icon/css/material-design-iconic-font.min.css">
+
+    <!-- Main css -->
+    <link rel="stylesheet" href="static/clib/css/style.css">
+</head>
+<body>
+
+    {% for message in get_flashed_messages() %}
+            <div class="alert alert-warning">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message }}
+            </div>
+    {% endfor %}
+
+    <div class="main" style="background-color: #c3e6cb; font-family: Candara">
+
+        {% block reglog %}
+        {% endblock %}
+
+    </div>
+
+    <!-- JS -->
+    <script src="static/clib/vendor/jquery/jquery.min.js"></script>
+    <script src="static/clib/js/main.js"></script>
+</body><!-- This templates was made by Colorlib (https://colorlib.com) -->
+</html>

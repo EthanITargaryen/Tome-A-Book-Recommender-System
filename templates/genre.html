@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+    {% block just_genre %}
+        <br/> <br/>
+        <h2>Books of {{ name }}</h2>
+        <br/> <br/> <br/>
+    {% endblock %}
+
+
+    <section id="books">
+        <table id="genresdtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+            <thead>
+            <tr>
+                <th class="th-sm">Cover
+                </th>
+                <th class="th-sm">Title
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for xbook in books %}
+                {% set title, image, b_id = xbook %}
+                <tr>
+                    <td><img src={{ image }} width="100px"></td>
+                    <td><a href={{ url_for('book', b_id=b_id) }}> {{ title }}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

@@ -1,0 +1,133 @@
+<!--
+    static/Moderna/
+-->
+
+{% extends "base.html" %}
+
+{% block styles %}
+    {{ super() }}
+{% endblock %}
+
+{% block page_content %}
+
+    <br/>
+    <div type="row">
+        <div type="col">
+            <p style="font-size: 30pt"> {{ title | safe }}</p>
+        </div>
+        {% if id %}
+            <div type="col" align="right">
+                {% if eval %}
+                    <button class="btn btn-success"> Evaluated </button>
+                {% elif read %}
+                    <button class="btn btn-success"> Already Read</button>
+                {% elif wish %}
+                    <button class="btn btn-success"> Added to Wishlist</button>
+                {% endif %}
+                {% if not wish %}
+                    <a role="button" class="btn btn-primary" href={{ url_for('wishes', b_id = book_id) }}>
+                        Wish to Read</a>
+                {% endif %}
+                {% if not read %}
+                    <a role="button" class="btn btn-primary" href={{ url_for('wishes', b_id = book_id) }}>
+                        Mark As Read</a>
+                {% endif %}
+                {% if not eval %}
+                    <a role="button" class="btn btn-primary" href={{ url_for('evaluated', b_id = book_id) }}>
+                        Evaluate </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    <ul style="list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #c3e6cb; width: 500px">
+        {% for name in author_names %}
+            <li>
+                <h3><a style="text-decoration: None; color: black;" onmouseover="this.style.backgroundColor='#006db9'"
+                       onmouseout="this.style.backgroundColor=''"
+                       href={{ url_for('author', id = name) }}> {{ name }} </a></h3>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <br/>
+
+    <ul id="menu" style="list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; display: inline;
+    background-color: #c3e6cb; font-size: 14pt">
+
+        {% for name in genre %}
+            <li style="display: inline" onmouseover="this.style.backgroundColor='#006db9'"
+                onmouseout="this.style.backgroundColor=''">
+                <a style="text-decoration: None; color: black; "
+                   href={{ url_for('genre', name = name) }}> &nbsp; {{ name }} &nbsp; </a>
+            </li>
+        {% endfor %}
+
+    </ul>
+    <br/> <br/> <br/>
+
+
+    <section class="about" data-aos="fade-up" style="margin-bottom: 200px">
+        <div class="container">
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <img src={{ image }} class="img-fluid" alt="">
+                </div>
+                <div class="col-lg-6 pt-4 pt-lg-0">
+
+                    {% if description %}{{ description | safe }}{% endif %}
+                    <br/> <br/> <br/>
+                    <div>
+                        <table class="table table-borderless table-hover">
+                            <tbody>
+                            {% if pub_name %}
+                                <tr>
+                                    <th scope="row">Publisher</th>
+                                    <td>{{ pub_name }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if pub_date %}
+                                <tr>
+                                    <th scope="row">Date of Publication</th>
+                                    <td>{{ pub_date }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if isbn %}
+                                <tr>
+                                    <th scope="row"> ISBN</th>
+                                    <td>{{ isbn }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if language %}
+                                <tr>
+                                    <th scope="row"> Language</th>
+                                    <td>{{ language }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if num_pages %}
+                                <tr>
+                                    <th scope="row"> No of Pages</th>
+                                    <td>{{ num_pages }}</td>
+                                </tr>
+                            {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section><!-- End About Section -->
+
+    <br/>
+
+
+{% endblock %}
+

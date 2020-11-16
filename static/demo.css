@@ -1,0 +1,13 @@
+body {
+  background-color: #c3e6cb;
+}
+
+h1 {
+  color: #16181b;
+  text-align: left;
+}
+
+/* mouse over link */
+a:hover {
+  color: hotpink;
+}
