@@ -5,6 +5,9 @@
     <li class="nav-item">
         <a href=#books class="nav-item nav-link px-3"> Books </a>
     </li>
+    <li class="nav-item">
+        <a href=#evals class="nav-item nav-link px-3"> Evaluations </a>
+    </li>
 {% endblock %}
 
 {% block page_content %}
@@ -30,10 +33,10 @@
                                 <td>{{ hometown }}</td>
                             </tr>
                             {% if dob %}
-                            <tr>
-                                <th scope="row">Date of Birth</th>
-                                <td>{{ dob }}</td>
-                            </tr>
+                                <tr>
+                                    <th scope="row">Date of Birth</th>
+                                    <td>{{ dob }}</td>
+                                </tr>
                             {% endif %}
                             <tr>
                                 <th scope="row">Date of Joining</th>
@@ -55,7 +58,7 @@
     <br/>
     <section id="books">
 
-        <h2>Books of {{ name }}</h2>
+        <h2>Books read by {{ name }}</h2>
         <br/> <br/> <br/>
         <table id="readdtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
             <thead>
@@ -71,10 +74,46 @@
                 {% set title, image, b_id = xbook %}
                 <tr>
                     <td><img src={{ image }} width="100px"></td>
-                    <td><a href={{ url_for('book', b_id=b_id) }}> {{ title }}</a></td>
+                    <td><a href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </section>
+
+    <br/>
+
+    <section id="evals">
+
+        <h2>Evaluations by {{ name }}</h2>
+        <br/> <br/> <br/>
+        <table id="dtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+            <thead>
+            <tr>
+                <th class="th-sm">Cover
+                </th>
+                <th class="th-sm">Title
+                </th>
+                <th class="th-sm">Rating
+                </th>
+                <th class="th-sm">Review
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for xbook in evals %}
+                {% set title, image, b_id, rat, rev = xbook %}
+                <tr>
+                    <td><img src={{ image }} width="100px"></td>
+                    <td><a href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    <td> {{ rat }} </td>
+                    <td>
+                        {% if rev %}
+                            {{ rev }} {% endif %} </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
 {% endblock %}

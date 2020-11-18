@@ -56,6 +56,44 @@ def info_for_username(username):
             ret['book'] = list()
             for row in cur.execute("SELECT BOOK_ID FROM READS WHERE READER_ID = :1", [ret['reader_id']]):
                 ret['book'].append(row[0])
+            ret['eval'] = list()
+            for row in cur.execute("SELECT EVAL_ID FROM EVALUATION WHERE READER_ID = :1", [ret['reader_id']]):
+                ret['eval'].append(row[0])
+    except Exception as e:
+        print("An error in info_for_username", e)
+    db_log_print(ret)
+    return ret
+
+
+def info_for_full_name(username):
+    """
+        for a given full_name,
+        find READER_ID, FULL_NAME, DATE_OF_BIRTH, GENDER, HOMETOWN, IMAGE_URL, JOIN_DATE
+    """
+
+    ret = None
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = dict()
+            for row in cur.execute("SELECT READER_ID, FULL_NAME, TO_CHAR(DATE_OF_BIRTH, 'YYYY, DD Month'), "
+                                   "GENDER, HOMETOWN, IMAGE_URL, TO_CHAR(JOIN_DATE, 'Mon-YYYY') "
+                                   "FROM PERSON INNER JOIN READER R on PERSON.PERSON_ID = R.READER_ID "
+                                   "WHERE Upper(full_name) = Upper(:1)", [username]):
+                ret['reader_id'] = row[0]
+                ret['name'] = row[1]
+                ret['dob'] = row[2]
+                ret['gender'] = row[3]
+                ret['hometown'] = row[4]
+                ret['image'] = row[5]
+                ret['join'] = row[6]
+            ret['book'] = list()
+            for row in cur.execute("SELECT BOOK_ID FROM READS WHERE READER_ID = :1", [ret['reader_id']]):
+                ret['book'].append(row[0])
+            ret['eval'] = list()
+            for row in cur.execute("SELECT EVAL_ID FROM EVALUATION WHERE READER_ID = :1", [ret['reader_id']]):
+                ret['eval'].append(row[0])
     except Exception as e:
         print("An error in info_for_username", e)
     db_log_print(ret)
@@ -88,6 +126,9 @@ def info_for_reader_id(id):
             ret['book'] = list()
             for row in cur.execute("SELECT BOOK_ID FROM READS WHERE READER_ID = :1 ORDER BY BOOK_ID DESC", [ret['reader_id']]):
                 ret['book'].append(row[0])
+            ret['eval'] = list()
+            for row in cur.execute("SELECT EVAL_ID FROM EVALUATION WHERE READER_ID = :1", [ret['reader_id']]):
+                ret['eval'].append(row[0])
     except Exception as e:
         print("An error in info_for_reader_id", e)
         ret = None
@@ -271,6 +312,54 @@ def books_of_a_genre(genre_name):
                 ret['book'].append(row[0])
     except Exception as e:
         print("An error in books_of_a_genre", e)
+        db_log_print(e)
+        ret = None
+    db_log_print(ret)
+    return ret
+
+
+def info_for_eval_id(eval_id):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = dict()
+            for row in cur.execute("SELECT RATING, REVIEW, DATE_UPDATED, B.BOOK_ID, TITLE, IMAGE_URL "
+                                "FROM EVALUATION INNER JOIN BOOK B on B.BOOK_ID = EVALUATION.BOOK_ID "
+                                   "WHERE EVAL_ID  = :1", [eval_id]):
+                ret['rating'] = row[0]
+                ret['review'] = row[1]
+                ret['date'] = row[2]
+                ret['book_id'] = row[3]
+                ret['title'] = row[4]
+                ret['image'] = row[5]
+    except Exception as e:
+        print("An error in info_for_eval_id", e)
+        db_log_print(e)
+        ret = None
+    db_log_print(ret)
+    return ret
+
+
+def info_reader_for_eval_id(eval_id):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = dict()
+            for row in cur.execute("SELECT RATING, REVIEW, to_char(DATE_UPDATED, 'YYYY, DD MONTH'), BOOK_ID,"
+                                   " READER_ID, PERSON_ID, FULL_NAME, IMAGE_URL "
+                                   " FROM EVALUATION INNER JOIN PERSON ON READER_ID = PERSON_ID "
+                                   " WHERE EVAL_ID =  :1", [eval_id]):
+                ret['rating'] = row[0]
+                ret['review'] = row[1]
+                ret['date'] = row[2]
+                ret['book_id'] = row[3]
+                ret['reader_id'] = row[5]
+                ret['full_name'] = row[6]
+                ret['image'] = row[7]
+    except Exception as e:
+        print("An error in info_for_eval_id", e)
         db_log_print(e)
         ret = None
     db_log_print(ret)

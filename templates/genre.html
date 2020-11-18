@@ -23,7 +23,7 @@
                 {% set title, image, b_id = xbook %}
                 <tr>
                     <td><img src={{ image }} width="100px"></td>
-                    <td><a href={{ url_for('book', b_id=b_id) }}> {{ title }}</a></td>
+                    <td><a href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
                 </tr>
             {% endfor %}
             </tbody>

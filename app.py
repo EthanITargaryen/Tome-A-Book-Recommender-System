@@ -51,7 +51,7 @@ def my_login_required(f):
 
 
 def render_my_template(html, **kwargs):
-    return render_template(html, id = session.get('id'), **kwargs)
+    return render_template(html, id = session.get('id'), s_username = session.get('username') , **kwargs)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -98,13 +98,13 @@ def m_about():
                               , about="Hi, ewfferiahjghjrehehjhnjrdfghsfsjghsjhjrghrj eghuewhgew bfhweb urbg uewgb ueb whbg ewhb uewb guerwbgewyhb feru vbyf bvewuf vrye eryb eug ewu uewbv uewb gueiq")
 
 
-@app.route('/author/<id>')
-def author(id):
+@app.route('/author/<brs_id>')
+def author(brs_id):
     try:
-        if str(id).isnumeric():
-            ret = info_for_author_id(id)
+        if str(brs_id).isnumeric():
+            ret = info_for_author_id(brs_id)
         else:
-            ret = info_for_author_name(id)
+            ret = info_for_author_name(brs_id)
         print(ret)
         books = []
         for b_id in ret['book']:
@@ -121,65 +121,91 @@ def author(id):
     return "BRS!"
 
 
-@app.route('/reader/<id>')
-def reader(id):
+@app.route('/reader/<brs_id>')
+def reader(brs_id):
     try:
-        if str(id).isnumeric():
-            ret = info_for_reader_id(id)
+        if str(brs_id).isnumeric():
+            ret = info_for_reader_id(brs_id)
         else:
-            ret = info_for_username(id)
+            ret = info_for_username(brs_id)
+            if ret is None:
+                ret = info_for_full_name(brs_id)
         print(ret)
         books = []
         for b_id in ret['book']:
             b_ret = info_for_book_id(b_id)
-            print(b_ret.get('book_id'))
+            # print(b_ret.get('book_id'))
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
+        evals = []
+        for eval_id in ret['eval']:
+            eval_ret = info_for_eval_id(eval_id)
+            evals.append(tuple((eval_ret.get('title'), eval_ret.get('image'), eval_ret.get('book_id'),
+                                eval_ret.get('rating'), eval_ret.get('review'))))
         if ret is not None:
-            return render_my_template("reader.html", books=books, **ret)
+            return render_my_template("reader.html", evals=evals, books=books, **ret)
     except Exception as e:
         return str(e)
     return "BRS!"
 
 
-@app.route('/genre/<name>')
-def genre(name):
+@app.route('/genre/<brs_id>')
+def genre(brs_id):
     try:
-        ret = books_of_a_genre(name)
+        ret = books_of_a_genre(brs_id)
         books = []
         for b_id in ret['book']:
             b_ret = info_for_book_id(b_id)
             print(b_ret.get('book_id'))
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
-        return render_my_template('genre.html', name = name, books=books)
+        return render_my_template('genre.html', name = brs_id, books=books)
     except Exception as e:
         return str(e)
     return "BRS!"
 
 
-@app.route('/book/<b_id>')
-def book(b_id):
+@app.route('/book/<brs_id>')
+def book(brs_id):
     try:
-        if str(b_id).isnumeric():
-            ret = info_for_book_id(b_id)
+        if str(brs_id).isnumeric():
+            ret = info_for_book_id(brs_id)
         else:
-            ret = info_for_book_title(b_id)
+            ret = info_for_book_title(brs_id)
         author_names = []
         for author_id in ret['author']:
             author_names += [info_for_author_id(author_id)['name']]
         print(ret)
+        evals = []
+        for eval_id in ret['eval']:
+            eval_ret = info_reader_for_eval_id(eval_id)
+            evals.append(tuple((eval_ret.get('full_name'), eval_ret.get('image'), eval_ret.get('reader_id'),
+                                eval_ret.get('rating'), eval_ret.get('review'), eval_ret.get('date'))))
+
         if session.get('id'):
-            ret['eval'] = check_wish_read_or_eval(session.get('id'), b_id, 'e')
-            ret['read'] = check_wish_read_or_eval(session.get('id'), b_id, 'r')
-            ret['wish'] = check_wish_read_or_eval(session.get('id'), b_id, 'w')
+            ret['eval'] = check_wish_read_or_eval(session.get('id'), brs_id, 'e')
+            ret['read'] = check_wish_read_or_eval(session.get('id'), brs_id, 'r')
+            ret['wish'] = check_wish_read_or_eval(session.get('id'), brs_id, 'w')
             ret['read'] |= ret['eval']
             ret['wish'] |= ret['read']
         if ret is not None:
-            return render_my_template('book.html', author_names = author_names, **ret)
+            return render_my_template('book.html', evals = evals
+                                      , author_names = author_names, **ret)
     except Exception as e:
         return str(e)
     return 'Brs!'
+
+
+@app.route('/genres')
+def all_genres():
+    ag = find_all_genres()
+    return render_my_template('all_base.html', fields = ag, type = 'genre')
+
+
+@app.route('/authors')
+def all_authors():
+    ag = find_all_authors()
+    return render_my_template('all_base.html', fields = ag, type = 'author')
 
 
 @app.route('/wishes/<b_id>')
@@ -187,7 +213,7 @@ def book(b_id):
 def wishes(b_id):
     if not wish_or_read(session.get('id'), b_id, 'w'):
         flash('You prolly already selected this option')
-    return redirect(url_for("book", b_id=b_id))
+    return redirect(url_for("book", brs_id=b_id))
 
 
 @app.route('/reads/<b_id>')
@@ -195,7 +221,7 @@ def wishes(b_id):
 def reads(b_id):
     if not wish_or_read(session.get('id'), b_id, 'r'):
         flash('You prolly already selected this option')
-    return redirect(url_for("book", b_id=b_id))
+    return redirect(url_for("book", brs_id=b_id))
 
 
 @app.route('/eval/<b_id>')
@@ -203,7 +229,7 @@ def reads(b_id):
 def evals(b_id):
     if not wish_or_read(session.get('id'), b_id, 'e'):
         flash('You prolly already selected this option')
-        return redirect(url_for("book", b_id=b_id))
+        return redirect(url_for("book", brs_id=b_id))
     else:
         return "{% extends base.html %} \n Under construction "
 
@@ -248,6 +274,7 @@ def sign_out():
     session.pop('username')
     session.pop('id')
     return redirect(url_for('m_about'))
+
 
 
 if __name__ == '__main__':

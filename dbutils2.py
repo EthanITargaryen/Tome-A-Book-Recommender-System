@@ -120,3 +120,41 @@ def insert_evaluation(reader_id, book_id, rating, review=''):
         print('Exception in insert_eval:', e)
     return False
 
+
+def find_all_genres():
+    print('it came to all_genres')
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = []
+            for row in cur.execute("SELECT GENRE_NAME, COUNT(DISTINCT BOOK_ID) AS CNT"
+                            " FROM GENRE INNER JOIN OF_GENRE OG on GENRE.GENRE_ID = OG.GENRE_ID"
+                            " GROUP BY GENRE_NAME ORDER BY CNT DESC"):
+                # print(row)
+                ret += [row]
+            print(len(ret))
+    except Exception as e:
+        ret = None
+        print('Exception in all_genres:', e)
+    return ret
+
+
+def find_all_authors():
+    print('it came to all_authors')
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = []
+            for row in cur.execute("SELECT FULL_NAME, COUNT(DISTINCT BOOK_ID) AS CNT "
+                                   " FROM PERSON INNER JOIN WRITES "" ON AUTHOR_ID = PERSON_ID"
+                                   " GROUP BY FULL_NAME ORDER BY CNT DESC, full_name desc"):
+                # print(row)
+                ret += [row]
+            print(len(ret))
+    except Exception as e:
+        ret = None
+        print('Exception in all_authors:', e)
+    return ret
+

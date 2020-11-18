@@ -4,8 +4,10 @@
 
 {% extends "base.html" %}
 
-{% block styles %}
-    {{ super() }}
+{% block more_nav %}
+    <li class="nav-item">
+        <a href=#evals class="nav-item nav-link px-3"> Evaluations </a>
+    </li>
 {% endblock %}
 
 {% block page_content %}
@@ -18,7 +20,7 @@
         {% if id %}
             <div type="col" align="right">
                 {% if eval %}
-                    <button class="btn btn-success"> Evaluated </button>
+                    <button class="btn btn-success"> Evaluated</button>
                 {% elif read %}
                     <button class="btn btn-success"> Already Read</button>
                 {% elif wish %}
@@ -48,7 +50,7 @@
             <li>
                 <h3><a style="text-decoration: None; color: black;" onmouseover="this.style.backgroundColor='#006db9'"
                        onmouseout="this.style.backgroundColor=''"
-                       href={{ url_for('author', id = name) }}> {{ name }} </a></h3>
+                       href={{ url_for('author', brs_id = name) }}> {{ name }} </a></h3>
             </li>
         {% endfor %}
     </ul>
@@ -65,7 +67,7 @@
             <li style="display: inline" onmouseover="this.style.backgroundColor='#006db9'"
                 onmouseout="this.style.backgroundColor=''">
                 <a style="text-decoration: None; color: black; "
-                   href={{ url_for('genre', name = name) }}> &nbsp; {{ name }} &nbsp; </a>
+                   href={{ url_for('genre', brs_id = name) }}> &nbsp; {{ name }} &nbsp; </a>
             </li>
         {% endfor %}
 
@@ -127,6 +129,42 @@
     </section><!-- End About Section -->
 
     <br/>
+
+    <section id="evals">
+
+        <h2>Evaluations on {{ title }}</h2>
+        <br/> <br/> <br/>
+        <table id="dtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+            <thead>
+            <tr>
+                <th class="th-sm">Image
+                </th>
+                <th class="th-sm">Name
+                </th>
+                <th class="th-sm">Rating
+                </th>
+                <th class="th-sm">Review
+                </th>
+                <th class="th-sm">Date
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for xbook in evals %}
+                {% set name, image, p_id, rat, rev, date = xbook %}
+                <tr>
+                    <td><img src={{ image }} width="100px"></td>
+                    <td><a href={{ url_for('reader', brs_id=p_id) }}> {{ name }}</a></td>
+                    <td> {{ rat }} </td>
+                    <td>
+                        {% if rev %}
+                            {{ rev }} {% endif %} </td>
+                    <td>{{ date }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
 
 
 {% endblock %}
