@@ -1,7 +1,7 @@
 import cx_Oracle as cx
 import time
 from flask_bcrypt import check_password_hash, generate_password_hash
-
+import dbutils
 
 """"
 with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -19,6 +19,8 @@ def db_log_print(text, **kwargs):
 
 def register_into_db(fullname, username, email, password, hometown, dob, image, gender, join_date = time.strftime('%Y-%m-%d')):
     try:
+        if str(username).lower() == 'admin':
+            return False
         with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
                         encoding="UTF-8") as con:
             cur = con.cursor()
@@ -49,6 +51,7 @@ def register_into_db(fullname, username, email, password, hometown, dob, image, 
 
 
 def check_username_password(username, password):
+
     flag = None
     try:
         with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -117,7 +120,7 @@ def insert_evaluation(reader_id, book_id, rating, review=''):
             con.commit()
             return True
     except Exception as e:
-        print('Exception in insert_eval:', e)
+        print('Exception in insert_eval: ', e)
     return False
 
 
@@ -136,7 +139,7 @@ def find_all_genres():
             print(len(ret))
     except Exception as e:
         ret = None
-        print('Exception in all_genres:', e)
+        print('Exception in all_genres: ', e)
     return ret
 
 
@@ -155,6 +158,69 @@ def find_all_authors():
             print(len(ret))
     except Exception as e:
         ret = None
-        print('Exception in all_authors:', e)
+        print('Exception in all_authors: ', e)
     return ret
 
+
+def admin_add_author_db(FULL_NAME_, DATE_OF_BIRTH_, HOMETOWN_, IMAGE_URL_, gender, ABOUT_, WEBPAGE_):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            if gender.lower()[0] == 'm':
+                gender = 'M'
+            elif gender.lower()[0] == 'f':
+                gender = 'F'
+            else:
+                gender = ''
+            cur.callproc('AUTHOR_INSERT', [FULL_NAME_, DATE_OF_BIRTH_, HOMETOWN_, IMAGE_URL_, gender, ABOUT_, WEBPAGE_])
+            con.commit()
+            return True
+    except Exception as e:
+        print('Exception in admin_add_author_db: ', e)
+        return False
+
+
+def admin_add_author_db(FULL_NAME_, DATE_OF_BIRTH_, HOMETOWN_, IMAGE_URL_, gender, ABOUT_, WEBPAGE_):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            if gender.lower()[0] == 'm':
+                gender = 'M'
+            elif gender.lower()[0] == 'f':
+                gender = 'F'
+            else:
+                gender = ''
+            cur.callproc('AUTHOR_INSERT', [FULL_NAME_, DATE_OF_BIRTH_, HOMETOWN_, IMAGE_URL_, gender, ABOUT_, WEBPAGE_])
+            con.commit()
+            return True
+    except Exception as e:
+        print('Exception in admin_add_author_db: ', e)
+        return False
+
+
+def admin_add_book_db(authors, genres, TITLE, PUBLICATION_DATE, ISBN, LANGUAGE, NUM_PAGES, IMAGE_URL, DESCRIPTION, PUBLISHER_NAME, COUNTRY):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            authors = [str(i).strip() for i in authors.split(',')]
+            author_ids = []
+            for author in authors:
+                ret = dbutils.info_for_author_name(author)
+                if ret is None:
+                    print("Author not found")
+                    return -1
+                author_ids += [ret.get('author_id')]
+            genres = [str(i).strip() for i in genres.split(',')]
+            genre_ids = []
+            for genre in genres:
+                ret_val = cur.callfunc('genre_number_or_insert', int, [genre])
+                genre_ids += [ret_val]
+            cur.callproc('book_insert', [TITLE, PUBLICATION_DATE, ISBN, LANGUAGE
+                , NUM_PAGES, IMAGE_URL, DESCRIPTION, PUBLISHER_NAME, COUNTRY])
+            con.commit()
+    except Exception as e:
+        print('Exception in admin_add_book_db: ', e)
+        return False

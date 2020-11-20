@@ -17,6 +17,7 @@ def is_safe_url(target):
     return test_url.scheme in ('http', 'https') and \
            ref_url.netloc == test_url.netloc
 
+
 """
     #c3e6cb
     1 ... EVALUATION PRIVILEGE 
@@ -28,7 +29,7 @@ app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['DB_EMAIL'] = os.environ.get('MAIL_USERNAME')
-app.config['DB_PASSWORD'] = "Ne$qDrbwAYpp" # os.environ.get('DB_PASSWORD')
+app.config['DB_PASSWORD'] = "Ne$qDrbwAYpp"  # os.environ.get('DB_PASSWORD')
 app.config['BRS_MAIL_SUBJECT_PREFIX'] = '[BRS]'
 app.config['BRS_MAIL_SENDER'] = 'BRS Admin ' + app.config['DB_EMAIL']
 app.config['SESSION'] = session
@@ -47,11 +48,24 @@ def my_login_required(f):
         else:
             flash("You should be logged in!")
             return redirect(url_for('login', next=request.url))
+
+    return decorated_function
+
+
+def admin_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('admin_privileges') or None:
+            return f(*args, **kwargs)
+        else:
+            flash("You should be logged in!")
+            return redirect(url_for('login', next=request.url))
+
     return decorated_function
 
 
 def render_my_template(html, **kwargs):
-    return render_template(html, id = session.get('id'), s_username = session.get('username') , **kwargs)
+    return render_template(html, id=session.get('id'), s_username=session.get('username'), **kwargs)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -67,6 +81,28 @@ def login():
         else:
             session['username'] = username
             session['id'] = r_id
+            flash("Login Successful, " + username)
+            return redirect(url_for('m_about'))
+    return render_my_template('clib/login.html')
+
+
+@app.route('/administrator_login', methods=['GET', 'POST'])
+def administrator_login():
+    if session.get('username') or None:
+        return redirect(url_for('m_about'))
+    if request.method == 'POST':
+        username = request.form.get('your_name')
+        password = request.form.get('your_pass')
+        r_id = check_username_password(username, password)
+        if r_id is None:
+            flash("Invalid Username/Password")
+        elif r_id != 6926:
+            flash("Insufficient Privileges")
+        else:
+            session['username'] = username
+            session['id'] = r_id
+            session['admin_privileges'] = True
+            flash("Welcome, admin!!!")
             return redirect(url_for('m_about'))
     return render_my_template('clib/login.html')
 
@@ -80,12 +116,14 @@ def register():
             for u, v in request.form.items():
                 print(u, v)
             if not register_into_db(fullname=request.form.get("fname"), email=request.form.get('email')
-                             , password=request.form.get('pass'), hometown=request.form.get('ht')
-                             , dob=request.form.get('dob'), image=request.form.get('iurl')
-                             , gender=request.form.get('exampleRadios'), username=request.form.get('uname')):
+                    , password=request.form.get('pass'), hometown=request.form.get('ht')
+                    , dob=request.form.get('dob'), image=request.form.get('iurl')
+                    , gender=request.form.get('exampleRadios'), username=request.form.get('uname')):
                 flash("Something went wrong. Register again.")
             else:
-                return render_my_template('author.html', name="R Tagore", image="https://images.gr-assets.com/authors/1453892068p7/36913.jpg", about="Hi, ewfferiahjghjrehehjhnjrdfghsfsjghsjhjrghrj eghuewhgew bfhweb urbg uewgb ueb whbg ewhb uewb guerwbgewyhb feru vbyf bvewuf vrye eryb eug ewu uewbv uewb gueiq")
+                return render_my_template('author.html', name="R Tagore",
+                                          image="https://images.gr-assets.com/authors/1453892068p7/36913.jpg",
+                                          about="Hi, ewfferiahjghjrehehjhnjrdfghsfsjghsjhjrghrj eghuewhgew bfhweb urbg uewgb ueb whbg ewhb uewb guerwbgewyhb feru vbyf bvewuf vrye eryb eug ewu uewbv uewb gueiq")
 
     return render_my_template('clib/register.html')
 
@@ -95,13 +133,14 @@ def m_about():
     print("It comes here")
     return render_my_template('author.html', name="R Tagore"
                               , image="https://images.gr-assets.com/authors/1453892068p7/36913.jpg"
-                              , about="Hi, ewfferiahjghjrehehjhnjrdfghsfsjghsjhjrghrj eghuewhgew bfhweb urbg uewgb ueb whbg ewhb uewb guerwbgewyhb feru vbyf bvewuf vrye eryb eug ewu uewbv uewb gueiq")
+                              ,
+                              about="Hi, ewfferiahjghjrehehjhnjrdfghsfsjghsjhjrghrj eghuewhgew bfhweb urbg uewgb ueb whbg ewhb uewb guerwbgewyhb feru vbyf bvewuf vrye eryb eug ewu uewbv uewb gueiq")
 
 
 @app.route('/author/<brs_id>')
 def author(brs_id):
     try:
-        if str(brs_id).isnumeric():
+        if str(brs_id).isnumeric() or str(brs_id)[1:].isnumeric():
             ret = info_for_author_id(brs_id)
         else:
             ret = info_for_author_name(brs_id)
@@ -113,9 +152,9 @@ def author(brs_id):
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
         if ret is not None:
-            return render_my_template("author.html", books=books, author_id = ret['author_id'], gender = ret['gender']
-                        , hometown = ret['hometown'], dob = ret['dob']
-                        , name = ret['name'], about = ret['about'], image = ret['image'], skipbar = False)
+            return render_my_template("author.html", books=books, author_id=ret['author_id'], gender=ret['gender']
+                                      , hometown=ret['hometown'], dob=ret['dob']
+                                      , name=ret['name'], about=ret['about'], image=ret['image'], skipbar=False)
     except Exception as e:
         return str(e)
     return "BRS!"
@@ -124,8 +163,10 @@ def author(brs_id):
 @app.route('/reader/<brs_id>')
 def reader(brs_id):
     try:
-        if str(brs_id).isnumeric():
+        if str(brs_id).isnumeric() or str(brs_id)[1:].isnumeric():
             ret = info_for_reader_id(brs_id)
+        elif str(brs_id).lower() == 'admin':
+            return "ERROR 404 NOT FOUND"
         else:
             ret = info_for_username(brs_id)
             if ret is None:
@@ -159,7 +200,7 @@ def genre(brs_id):
             print(b_ret.get('book_id'))
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
-        return render_my_template('genre.html', name = brs_id, books=books)
+        return render_my_template('genre.html', name=brs_id, books=books)
     except Exception as e:
         return str(e)
     return "BRS!"
@@ -168,7 +209,7 @@ def genre(brs_id):
 @app.route('/book/<brs_id>')
 def book(brs_id):
     try:
-        if str(brs_id).isnumeric():
+        if str(brs_id).isnumeric() or str(brs_id)[1:].isnumeric():
             ret = info_for_book_id(brs_id)
         else:
             ret = info_for_book_title(brs_id)
@@ -189,8 +230,8 @@ def book(brs_id):
             ret['read'] |= ret['eval']
             ret['wish'] |= ret['read']
         if ret is not None:
-            return render_my_template('book.html', evals = evals
-                                      , author_names = author_names, **ret)
+            return render_my_template('book.html', evals=evals
+                                      , author_names=author_names, **ret)
     except Exception as e:
         return str(e)
     return 'Brs!'
@@ -199,13 +240,21 @@ def book(brs_id):
 @app.route('/genres')
 def all_genres():
     ag = find_all_genres()
-    return render_my_template('all_base.html', fields = ag, type = 'genre')
+    return render_my_template('all_base.html', fields=ag, type='genre')
 
 
 @app.route('/authors')
 def all_authors():
     ag = find_all_authors()
-    return render_my_template('all_base.html', fields = ag, type = 'author')
+    return render_my_template('all_base.html', fields=ag, type='author')
+
+
+@app.route('/index')
+def ad_index():
+    return render_template('admin/index.html')
+
+
+# New Add here
 
 
 @app.route('/wishes/<b_id>')
@@ -253,7 +302,7 @@ def evaluated(b_id):
                 print("y: ", y)
                 if insert_evaluation(session.get('id'), b_id, x, y) or None:
                     flash("Evaluation Done!")
-                    return redirect(url_for('book', b_id=b_id))
+                    return redirect(url_for('book', brs_id=b_id))
                 else:
                     flash("Something went wrong!")
         return render_my_template('eval.html', form=form, title=title)
@@ -273,8 +322,33 @@ def self_name():
 def sign_out():
     session.pop('username')
     session.pop('id')
+    session.pop('admin_privileges', 0)
     return redirect(url_for('m_about'))
 
+
+@app.route('/admin_home')
+@admin_login_required
+def admin_home():
+    flash("HELLO, ADMIN")
+    return render_my_template('base.html')
+
+
+@app.route('/adminstrator_add_author', methods=['GET', 'POST'])
+@admin_login_required
+def admin_add_author():
+    try:
+        form = formdir.AdminAuthorForm()
+        print(form.is_submitted())
+        if form.validate_on_submit():
+            # ret = dict(form)
+            # print(ret)
+            if admin_add_author_db(form.full_name.data, form.dob.data, form.hometown.data,
+                       form.image_url.data, form.gender.data, form.about.data, form.webpage.data):
+                flash("Author " + form.full_name.data + " has successfully been inserted!")
+                return redirect(url_for('admin_home'))
+        return render_my_template('admin_author_form.html', form=form)
+    except Exception as e:
+        return str(e)
 
 
 if __name__ == '__main__':
