@@ -1,5 +1,7 @@
 import cx_Oracle as cx
 import time
+import pandas as pd
+from matrix_factorization import *
 
 """"
 with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -318,6 +320,49 @@ def books_of_a_genre(genre_name):
     return ret
 
 
+def books_of_a_publisher(publisher_name):
+    """
+    :param publisher_name:
+    :return: all book ids of that genre
+    """
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = dict()
+            ret['book'] = list()
+            for row in cur.execute("SELECT BOOK_ID FROM BOOK INNER JOIN PUBLISHER P on P.PUBLISHER_ID = BOOK.PUBLISHER_ID "
+                                   "WHERE upper(PUBLISHER_NAME) = :1", [publisher_name.upper()]):
+                ret['book'].append(row[0])
+    except Exception as e:
+        print("An error in books_of_a_publisher", e)
+        db_log_print(e)
+        ret = None
+    db_log_print(ret)
+    return ret
+
+
+def books_of_a_language(language_name):
+    """
+    :param language_name:
+    :return: all book ids of that genre
+    """
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = dict()
+            ret['book'] = list()
+            for row in cur.execute("SELECT BOOK_ID FROM BOOK WHERE upper(LANGUAGE) = :1", [language_name.upper()]):
+                ret['book'].append(row[0])
+    except Exception as e:
+        print("An error in books_of_a_language", e)
+        db_log_print(e)
+        ret = None
+    db_log_print(ret)
+    return ret
+
+
 def info_for_eval_id(eval_id):
     try:
         with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -365,6 +410,38 @@ def info_reader_for_eval_id(eval_id):
     db_log_print(ret)
     return ret
 
+
+class MyRecommender:
+    def __init__(self):
+        try:
+            with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                            encoding="UTF-8") as con:
+                cur = con.cursor()
+                frame = pd.read_sql('''SELECT BOOK_ID, READER_ID, MAX(RATING) as M 
+                                        FROM EVALUATION
+                                        GROUP BY BOOK_ID, READER_ID''', con=con)
+                self.frame = frame.rename(columns={
+                    'BOOK_ID': 'item_id', 'READER_ID': 'user_id', 'M': 'rating'
+                })
+                (
+                    self.X_train_initial,
+                    self.y_train_initial,
+                    self.X_train_update,
+                    self.y_train_update,
+                    self.X_test_update,
+                    self.y_test_update,
+                ) = train_update_test_split(self.frame, 0.01)
+                self.matrix_fact = KernelMF(n_epochs=20, n_factors=100, verbose=1, lr=0.001, reg=0.005)
+                self.matrix_fact.fit(self.X_train_initial, self.y_train_initial)
+                print('Fitting done.')
+        except Exception as e:
+            print("An error in constructing the recommender")
+            pass
+
+    def list_recommended_books(self, reader_id):
+        items_known = self.X_train_initial.query("user_id == @reader_id")["item_id"]
+        ret = self.matrix_fact.recommend(user=reader_id, items_known=items_known, amount=10)
+        return ret['item_id']
 
 if __name__ == '__main__':
     print("ewfr")

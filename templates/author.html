@@ -5,6 +5,10 @@
 
 {% extends "base.html" %}
 
+{% block title %}
+{{ name }}
+{% endblock %}
+
 {% block more_nav %}
 
     <li class="nav-item">
@@ -79,7 +83,6 @@
             </tbody>
         </table>
     </section>
-
 
 {% endblock %}
 

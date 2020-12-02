@@ -34,6 +34,7 @@ def register_into_db(fullname, username, email, password, hometown, dob, image, 
             cur.execute("INSERT INTO PERSON (FULL_NAME, DATE_OF_BIRTH, HOMETOWN, IMAGE_URL, GENDER) "
                         "VALUES (:1, to_date(:2, 'YYYY-DD-MM'), :3, :4, :5)",
                         [fullname, dob, hometown, image, gender])
+            # print('Halfway')
             _id = ''
             for x in cur.execute("SELECT PERSON_SEQUENCE.currval FROM DUAL"):
                 _id = x[0]
@@ -67,6 +68,21 @@ def check_username_password(username, password):
     except Exception as e:
             print('Exception in dbutils2 check_username_password', e)
     return flag
+
+
+def update_password_to_entropy():
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            r_ids = []
+            for r in cur.execute('SELECT READER_ID FROM READER'):
+                r_ids += [r]
+            for r in r_ids:
+                cur.execute('UPDATE READER SET PASSWORD_HASH = :1 WHERE READER_ID = :2', [generate_password_hash('entropy').decode('UTF-8'), r[0]])
+            con.commit()
+    except Exception as e:
+        return 'Hello '+ str(e)
 
 
 def wish_or_read(reader_id, book_id, flag = 'r'):
@@ -162,6 +178,42 @@ def find_all_authors():
     return ret
 
 
+def find_all_languages():
+    print('it came to all_languages')
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = []
+            for row in cur.execute("SELECT LANGUAGE, COUNT(DISTINCT BOOK_ID) AS CNT "
+                                   "FROM BOOK WHERE LANGUAGE IS NOT NULL  "
+                                   "GROUP BY LANGUAGE ORDER BY CNT desc"):
+                ret += [row]
+            print(len(ret))
+    except Exception as e:
+        ret = None
+        print('Exception in all_languages: ', e)
+    return ret
+
+
+def find_all_publishers():
+    print('it came to all_publishers')
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret = []
+            for row in cur.execute("SELECT PUBLISHER_NAME, COUNT(DISTINCT BOOK_ID) AS CNT "
+                                   "FROM BOOK INNER JOIN PUBLISHER P on P.PUBLISHER_ID = BOOK.PUBLISHER_ID "
+                                   "GROUP BY PUBLISHER_NAME ORDER BY CNT DESC"):
+                ret += [row]
+            print(len(ret))
+    except Exception as e:
+        ret = None
+        print('Exception in all_publishers: ', e)
+    return ret
+
+
 def admin_add_author_db(FULL_NAME_, DATE_OF_BIRTH_, HOMETOWN_, IMAGE_URL_, gender, ABOUT_, WEBPAGE_):
     try:
         with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -221,6 +273,7 @@ def admin_add_book_db(authors, genres, TITLE, PUBLICATION_DATE, ISBN, LANGUAGE, 
             cur.callproc('book_insert', [TITLE, PUBLICATION_DATE, ISBN, LANGUAGE
                 , NUM_PAGES, IMAGE_URL, DESCRIPTION, PUBLISHER_NAME, COUNTRY])
             con.commit()
+            return True
     except Exception as e:
         print('Exception in admin_add_book_db: ', e)
         return False

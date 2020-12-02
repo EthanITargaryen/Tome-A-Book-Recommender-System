@@ -25,6 +25,23 @@
                 <ul class="navbar-nav navbar-right media-right"
                     style="margin-left:auto; margin-right: 0">
 
+                    {% if admin_privileges %}
+                        <li class="nav-item">
+                            <a href='/adminstrator_add_author' class="nav-item nav-link" style="width: 100px">Add
+                                Author</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href='/adminstrator_add_book' class="nav-item nav-link px-20" style="width: 90px">Add
+                                Book</a>
+                        </li>
+                    {% elif id %}
+                        <li class="nav-item">
+                            <a class="nav-item nav-link" style="width: 90px" href={{ url_for('reader', brs_id = id) }}>
+                                Self
+                                Profile </a>
+                        </li>
+                    {% endif %}
+
                     {% if id %}
                         <li class="nav-item">
                             <a href='/signout' class="nav-item nav-link px-3"> Sign Out </a>
@@ -35,8 +52,9 @@
                         </li>
                     {% endif %}
                 </ul>
-        </div>
+            </div>
 
+        </div>
     </nav>
 {% endblock %}
 

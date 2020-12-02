@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block page_content %}
+
+    <div class="row" style="width: 80vw">
+        <div class="col">
+            <img style="width: 100px" src= {{ image }}>
+        </div>
+        <div class="col" style="alignment: center"> {{ title }}
+        </div>
+    </div>
+    {% for cmt in comments %}
+    {% set text, replies, username, userimage = cmt %}
+    <div class="row">
+        <div class="col">
+            <img style="width: 100px" src= {{ image }}>
+        </div>
+        <div class="col" style="alignment: center"> {{ text }}
+        </div>
+        <div class="row" style="margin-left: 15vw">
+            {% for reps in replies %}
+                {% set rtext, rname, rimage = reps %}
+                <div class="col">
+                    <img style="width: 100px" src= {{ image }}>
+                </div>
+                <div class="col" style="alignment: center"> {{ text }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}

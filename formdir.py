@@ -41,4 +41,7 @@ class AdminBookForm(FlaskForm):
     num_pages = IntegerField("Number of Pages")
     image_url = StringField("Image URL", validators=[DataRequired()])
     description = TextAreaField("Description", validators=[DataRequired()])
+    submit = SubmitField("Submit")
 
+
+# class Comment

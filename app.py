@@ -2,7 +2,9 @@ from flask import Flask, render_template, flash, request, g, redirect, url_for, 
 from flask_bootstrap import Bootstrap
 from flask_mail import Mail, Message
 from flask_login import UserMixin, LoginManager, login_required, login_user, logout_user
+from flask_bcrypt import Bcrypt
 from functools import wraps
+import pandas as pd
 import cx_Oracle as cx
 import os
 import formdir
@@ -38,6 +40,8 @@ app.secret_key = b'_5#y1L"FR8z\n\xec]/'
 
 bootstrap = Bootstrap(app)
 mail = Mail(app)
+bcrypt = Bcrypt(app)
+global recommender
 
 
 def my_login_required(f):
@@ -65,7 +69,16 @@ def admin_login_required(f):
 
 
 def render_my_template(html, **kwargs):
-    return render_template(html, id=session.get('id'), s_username=session.get('username'), **kwargs)
+    return render_template(html, id=session.get('id'), s_username=session.get('username'),
+                           admin_privileges=session.get('admin_privileges', False) ,**kwargs)
+
+
+''' RANDOM UTILITIES'''
+
+
+@app.route('/com')
+def com():
+    return render_template('comment_temp.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -130,11 +143,18 @@ def register():
 
 @app.route('/')
 def m_about():
-    print("It comes here")
-    return render_my_template('author.html', name="R Tagore"
-                              , image="https://images.gr-assets.com/authors/1453892068p7/36913.jpg"
-                              ,
-                              about="Hi, ewfferiahjghjrehehjhnjrdfghsfsjghsjhjrghrj eghuewhgew bfhweb urbg uewgb ueb whbg ewhb uewb guerwbgewyhb feru vbyf bvewuf vrye eryb eug ewu uewbv uewb gueiq")
+    global recommender
+    if 'recommender' not in globals():
+        print('Not in globals')
+        recommender = MyRecommender()
+    return render_my_template('home.html')
+
+
+@app.route('/wert')
+def wert():
+    global recommender
+    print(recommender.list_recommended_books(7105))
+    return 'High in the halls!'
 
 
 @app.route('/author/<brs_id>')
@@ -197,6 +217,38 @@ def genre(brs_id):
         books = []
         for b_id in ret['book']:
             b_ret = info_for_book_id(b_id)
+            # print(b_ret.get('book_id'))
+            books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
+        print(books)
+        return render_my_template('genre.html', name=brs_id, books=books)
+    except Exception as e:
+        return str(e)
+    return "BRS!"
+
+
+@app.route('/language/<brs_id>')
+def language(brs_id):
+    try:
+        ret = books_of_a_language(brs_id)
+        books = []
+        for b_id in ret['book']:
+            b_ret = info_for_book_id(b_id)
+            print(b_ret.get('book_id'))
+            books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
+        print(books)
+        return render_my_template('genre.html', name=brs_id, books=books)
+    except Exception as e:
+        return str(e)
+    return "BRS!"
+
+
+@app.route('/publisher/<brs_id>')
+def publisher(brs_id):
+    try:
+        ret = books_of_a_publisher(brs_id)
+        books = []
+        for b_id in ret['book']:
+            b_ret = info_for_book_id(b_id)
             print(b_ret.get('book_id'))
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
@@ -240,13 +292,25 @@ def book(brs_id):
 @app.route('/genres')
 def all_genres():
     ag = find_all_genres()
-    return render_my_template('all_base.html', fields=ag, type='genre')
+    return render_my_template('all_base.html', fields=ag, type='genre', page_title = 'All Genres')
 
 
 @app.route('/authors')
 def all_authors():
     ag = find_all_authors()
-    return render_my_template('all_base.html', fields=ag, type='author')
+    return render_my_template('all_base.html', fields=ag, type='author', page_title = 'All Authors')
+
+
+@app.route('/languages')
+def all_languages():
+    ag = find_all_languages()
+    return render_my_template('all_base.html', fields=ag, type='language', page_title = 'All Languages')
+
+
+@app.route('/publishers')
+def all_publishers():
+    ag = find_all_publishers()
+    return render_my_template('all_base.html', fields=ag, type='publisher', page_title = 'All Publishers')
 
 
 @app.route('/index')
@@ -311,6 +375,20 @@ def evaluated(b_id):
     return 'Brs!'
 
 
+@app.route('/recommend')
+@my_login_required
+def recommend_me():
+    global recommender
+    ret = recommender.list_recommended_books(session.get('id'))
+    books = []
+    for b_id in ret:
+        b_ret = info_for_book_id(b_id)
+        # print(b_ret.get('book_id'))
+        books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
+    print(books)
+    return render_my_template('genre.html', name='Recommendation for ' + str(session.get('username')), books=books)
+
+
 @app.route('/self')
 @my_login_required
 def self_name():
@@ -323,6 +401,7 @@ def sign_out():
     session.pop('username')
     session.pop('id')
     session.pop('admin_privileges', 0)
+    flash('Signed Out')
     return redirect(url_for('m_about'))
 
 
@@ -343,10 +422,29 @@ def admin_add_author():
             # ret = dict(form)
             # print(ret)
             if admin_add_author_db(form.full_name.data, form.dob.data, form.hometown.data,
-                       form.image_url.data, form.gender.data, form.about.data, form.webpage.data):
+                                   form.image_url.data, form.gender.data, form.about.data, form.webpage.data):
                 flash("Author " + form.full_name.data + " has successfully been inserted!")
                 return redirect(url_for('admin_home'))
         return render_my_template('admin_author_form.html', form=form)
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/adminstrator_add_book', methods=['GET', 'POST'])
+@admin_login_required
+def admin_add_book():
+    try:
+        form = formdir.AdminBookForm()
+        if form.validate_on_submit():
+            if admin_add_book_db(form.authors.data, form.genres.data, form.title.data, form.pub_date.data,
+                                 form.isbn.data, form.language.data, form.num_pages.data, form.image_url.data,
+                                 form.description.data, form.publisher.data, form.country.data):
+                flash("Book " + form.title.data + " has successfully been inserted!")
+                print("Insertion done!")
+                return redirect(url_for('admin_home'))
+            else:
+                flash("An error occurred")
+        return render_my_template('admin_book_form.html', form=form)
     except Exception as e:
         return str(e)
 

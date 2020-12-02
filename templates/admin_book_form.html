@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+div {
+  max-width: 500px;
+  height: 100px;
+  background-color: powderblue;
+}
+
+{% block title %}Book - Admin{% endblock %}
+{% block page_content %}
+    <br/> <br/> <br/>
+    <h1>Add a Book</h1>
+    <h3>Please make to sure to add author(s) first</h3>
+    <br/> <br/>  <br/>
+    <div class="page-header" style="width: 650px; font-size: 13pt">
+        {{ wtf.quick_form(form) }}
+    </div>
+    <br/> <br/>  <br/>
+{% endblock %}
