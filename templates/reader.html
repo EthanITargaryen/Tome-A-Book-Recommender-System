@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-{{ name }}
+    {{ name }}
 {% endblock %}
 
 {% block styles %}
@@ -12,7 +12,7 @@
 
 {% block scripts %}
     {{ super() }}
-    <script src="{{ url_for('.static', filename='table_pagination.js') }}"> </script>
+    <script src="{{ url_for('.static', filename='table_pagination.js') }}"></script>
 {% endblock %}
 
 {% block more_nav %}
@@ -27,8 +27,24 @@
 
 {% block page_content %}
     <br/>
+    {% if reader_id == id %}
+        <br/>
+        <div type="row">
+            <div type="col">
+                <p style="font-size: 30pt;"> Hello, {{ name }}!</p>
+            </div>
+            {% if id %}
+                <div type="col" align="right">
+                        <a role="button" class="btn btn-danger" href={{ url_for('pw_change') }}>
+                            Update Password</a>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
 
-    <h1> {{ name }}</h1>
+        <h1> {{ name }}</h1>
+
+    {% endif %}
 
     <br/> <br/> <br/>
 
@@ -75,25 +91,29 @@
 
         <h2>Books read by {{ name }}</h2>
         <br/> <br/> <br/>
-        <table id="readdtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
-            <thead>
-            <tr>
-                <th class="th-sm">Cover
-                </th>
-                <th class="th-sm">Title
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for xbook in books %}
-                {% set title, image, b_id = xbook %}
+        <div class="table-wrapper-scroll-y my-custom-scrollbar">
+            <table id="readdtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0"
+                   width="100%">
+                <thead>
                 <tr>
-                    <td><img src={{ image }} width="100px"></td>
-                    <td><a href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    <th class="th-sm">Cover
+                    </th>
+                    <th class="th-sm">Title
+                    </th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for xbook in books %}
+                    {% set title, image, b_id = xbook %}
+                    <tr>
+                        <td><img src='{{ image }}' width="100px"></td>
+                        <td><a style="font-size:16pt; color: black"
+                               href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <br/>

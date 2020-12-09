@@ -3,11 +3,10 @@
 {% block reglog %}
     <!-- Sing in  Form -->
         <section class="sign-in">
-            <div class="container">
+            <div class="container" >
                 <div class="signin-content" >
                     <div class="signin-image">
                         <figure><img src="static/clib/images/pile_of_books.jpg" alt="sing up image"></figure>
-                        <a href={{ url_for("register") }} class="signup-image-link">Create an account</a>
                     </div>
 
                     <div class="signin-form">
@@ -29,6 +28,9 @@
                                 <input type="submit" name="signin" id="signin" class="form-submit" value="Log in"/>
                             </div>
                         </form>
+                                     <br/> <br/> <br/> <br/>
+                        Don't have an account? <br/>
+                        <a role="button" class="btn btn-danger" href="{{ url_for('register') }}"> Create an account </a>
                         <!--
                         <div class="social-login">
                             <span class="social-label">Or login with</span>

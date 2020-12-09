@@ -3,27 +3,47 @@
 {% block page_content %}
     {% block just_genre %}
         <br/> <br/>
-        <h2>Books of {{ name }}</h2>
+        {% if follow_authors %}
+            <h1> Authors I am following ...</h1>
+        {% else %}
+            <h2>Books of {{ name }}</h2>
+        {% endif %}
         <br/> <br/> <br/>
-{% endblock %}
+    {% endblock %}
 
 
     <section id="books">
-        <table id="genresdtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+        <table id="genresdtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0"
+               width="100%">
             <thead>
-            <tr>
-                <th class="th-sm">Cover
-                </th>
-                <th class="th-sm">Title
-                </th>
-            </tr>
+            {% if follow_authors %}
+                <tr>
+                    <th class="th-sm">Image
+                    </th>
+                    <th class="th-sm" style="margin-left: 10vw;">Name
+                    </th>
+                </tr>
+            {% else %}
+                <tr>
+                    <th class="th-sm">Cover
+                    </th>
+                    <th style="margin-left: 2vw;" class="th-sm">Title
+                    </th>
+                </tr>
+            {% endif %}
             </thead>
             <tbody>
             {% for xbook in books %}
                 {% set title, image, b_id = xbook %}
                 <tr>
-                    <td><img src={{ image }} width="100px"></td>
-                    <td><a href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    <td style="width: 160px"><img width="150px" src={{ image }}></td>
+                    {% if follow_authors %}
+                        <td><a style="font-size:16pt; color: black; margin-left: 2vw"
+                               href={{ url_for('author', brs_id=b_id) }}> {{ title }}</a></td>
+                    {% else %}
+                        <td><a style="font-size:16pt; color: black; margin-left: 2vw"
+                               href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>

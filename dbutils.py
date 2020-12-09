@@ -163,8 +163,13 @@ def info_for_author_name(full_name):
                 ret['about'] = row[6]
                 ret['webpage'] = row[7]
             ret['book'] = list()
-            for row in cur.execute("SELECT BOOK_ID FROM WRITES WHERE AUTHOR_ID = :1 ORDER BY BOOK_ID DESC", [ret['author_id']]):
+            for row in cur.execute("SELECT BOOK_ID FROM WRITES WHERE AUTHOR_ID = :1 "
+                                   "ORDER BY BOOK_ID DESC", [ret['author_id']]):
                 ret['book'].append(row[0])
+            ret['no_books'] = len(ret['book'])
+            for row in cur.execute("SELECT COUNT(FOLLOWER) FROM FOLLOWS "
+                                   "WHERE FOLLOWED=:1", [ret['author_id']]):
+                ret['fol'] = row[0]
     except Exception as e:
         print("An error in info_for_author_name", e)
         db_log_print(e)
@@ -202,6 +207,10 @@ def info_for_author_id(id):
             ret['book'] = list()
             for row in cur.execute("SELECT BOOK_ID FROM WRITES WHERE AUTHOR_ID = :1 ORDER BY BOOK_ID DESC", [ret['author_id']]):
                 ret['book'].append(row[0])
+            ret['no_books'] = len(ret['book'])
+            for row in cur.execute("SELECT COUNT(FOLLOWER) FROM FOLLOWS "
+                                   "WHERE FOLLOWED=:1", [ret['author_id']]):
+                ret['fol'] = row[0]
     except Exception as e:
         print("An error in info_for_author_id", e)
         db_log_print(e)
@@ -245,6 +254,26 @@ def info_for_book_title(title):
             ret['eval'] = list()
             for row in cur.execute("SELECT EVAL_ID FROM EVALUATION WHERE BOOK_ID = :1", [ret['book_id']]):
                 ret['eval'].append(row[0])
+            ret['recom'] = list()
+            for row in cur.execute('''
+                SELECT TITLE, IMAGE_URL, BOOK_ID
+                    FROM (SELECT BOOK, SCORE
+                          FROM (
+                                       (SELECT BOOK_2 AS BOOK, SCORE FROM BOOK_SIMILAR WHERE BOOK_1 = :1)
+                                       UNION
+                                       (SELECT BOOK_1 AS BOOK, SCORE FROM BOOK_SIMILAR WHERE BOOK_2 = :2))
+                          ORDER BY SCORE DESC) C
+                             INNER JOIN BOOK ON BOOK_ID = C.BOOK
+                    WHERE ROWNUM <= 10''', [ret['book_id'], ret['book_id']]):
+                ret['recom'] += [row]
+            if len(ret['recom']) == 0:
+                ret['recom'] = False
+            for row in cur.execute('SELECT COUNT(DISTINCT READER_ID) FROM READS WHERE BOOK_ID=:1'
+                    , [ret['book_id']]):
+                ret['times_read'] = row[0]
+            for row in cur.execute('SELECT ROUND(AVG(RATING), 2) FROM EVALUATION WHERE BOOK_ID=:1'
+                    , [ret['book_id']]):
+                ret['avg_rating'] = row[0]
     except Exception as e:
         print("An error in info_for_book_title", title, e)
         db_log_print(e)
@@ -288,6 +317,26 @@ def info_for_book_id(id):
             ret['eval'] = list()
             for row in cur.execute("SELECT EVAL_ID FROM EVALUATION WHERE BOOK_ID = :1", [ret['book_id']]):
                 ret['eval'].append(row[0])
+            ret['recom'] = list()
+            for row in cur.execute('''
+                SELECT TITLE, IMAGE_URL, BOOK_ID
+                    FROM (SELECT BOOK, SCORE
+                          FROM (
+                                       (SELECT BOOK_2 AS BOOK, SCORE FROM BOOK_SIMILAR WHERE BOOK_1 = :1)
+                                       UNION
+                                       (SELECT BOOK_1 AS BOOK, SCORE FROM BOOK_SIMILAR WHERE BOOK_2 = :2))
+                          ORDER BY SCORE DESC) C
+                             INNER JOIN BOOK ON BOOK_ID = C.BOOK
+                    WHERE ROWNUM <= 10''', [ret['book_id'], ret['book_id']]):
+                ret['recom'] += [row]
+            if len(ret['recom']) == 0:
+                ret['recom'] = False
+            for row in cur.execute('SELECT COUNT(DISTINCT READER_ID) FROM READS WHERE BOOK_ID=:1'
+                    , [ret['book_id']]):
+                ret['times_read'] = row[0]
+            for row in cur.execute('SELECT ROUND(AVG(RATING), 2) FROM EVALUATION WHERE BOOK_ID=:1'
+                    , [ret['book_id']]):
+                ret['avg_rating'] = row[0]
     except Exception as e:
         print(ret)
         print("An error in info_for_book_id", id, e)

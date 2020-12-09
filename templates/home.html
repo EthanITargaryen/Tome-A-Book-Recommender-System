@@ -2,7 +2,18 @@
 
 {% block page_content %}
     <br/> <br/> <br/>
-    <h1>Welcome to BRS</h1>
+    <h1>Welcome to Tome!</h1>
+    <form class="form-inline my-2 my-lg-0">
+      <input id="Search" class="form-control mr-sm-2" type="search"
+             placeholder="Search ... (books, authors, readers, publishers)" aria-label="Search"
+            name="Search" style="width: 450px">
+      <button class="btn btn-outline-success my-2 my-sm-0"
+              formmethod="post" type="submit">Search</button>
+    </form> <br/>
+    <p style="font-size: 14pt">
+    Tome is a book recommender system, made just for you. It hosts over 30,000 books of over 4,000 writers in 10 languages. Many readers just like you are here, commenting on their favourite books, rating them, and getting recommendations from the system. Happy reading!
+    </p> <br/>
+
     <br/>
 
     <ul class="list-group">

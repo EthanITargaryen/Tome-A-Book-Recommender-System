@@ -5,18 +5,22 @@
 {% extends "base.html" %}
 
 {% block title %}
-{{ title }}
+    {{ title }}
 {% endblock %}
 
 {% block more_nav %}
     <li class="nav-item">
         <a href=#evals class="nav-item nav-link px-3"> Evaluations </a>
     </li>
-    <!--
+    {% if recom %}
+        <li class="nav-item" style="width: 180px">
+            <a href=#sim class="nav-item nav-link"> Similar Books </a>
+        </li>
+    {% endif %}
+
     <li class="nav-item">
-        <a href=#evals class="nav-item nav-link px-3"> Comments </a>
+        <a class="nav-item nav-link px-3" href={{ url_for('comment_on_book', brs_id=book_id)}}> Comments </a>
     </li>
-    -->
 {% endblock %}
 
 {% block page_content %}
@@ -24,7 +28,7 @@
     <br/>
     <div type="row">
         <div type="col">
-            <p style="font-size: 30pt"> {{ title | safe }}</p>
+            <p style="font-size: 30pt;"> {{ title | safe }}</p>
         </div>
         {% if id %}
             <div type="col" align="right">
@@ -57,9 +61,10 @@
     background-color: #c3e6cb; width: 500px">
         {% for name in author_names %}
             <li>
-                <h3><a style="text-decoration: None; color: black;" onmouseover="this.style.backgroundColor='#006db9'"
+                <h3><a style="text-decoration: None; color: black;"
+                       onmouseover="this.style.backgroundColor='#006db9'"
                        onmouseout="this.style.backgroundColor=''"
-                       href={{ url_for('author', brs_id = name) }}> {{ name }} </a></h3>
+                       href='{{ url_for('author', brs_id = name) }}'> {{ name }} </a></h3>
             </li>
         {% endfor %}
     </ul>
@@ -85,6 +90,7 @@
 
 
     <section class="about" data-aos="fade-up" style="margin-bottom: 200px">
+        <br/> <br/> <br/>
         <div class="container">
 
             <div class="row">
@@ -128,6 +134,18 @@
                                     <td>{{ num_pages }}</td>
                                 </tr>
                             {% endif %}
+                            {% if times_read %}
+                                <tr>
+                                    <th scope="row"> Times Read</th>
+                                    <td>{{ times_read }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if avg_rating %}
+                                <tr>
+                                    <th scope="row"> Average Rating </th>
+                                    <td> <b> {{ avg_rating }} </b> </td>
+                                </tr>
+                            {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -148,7 +166,7 @@
             <tr>
                 <th class="th-sm">Image
                 </th>
-                <th class="th-sm">Name
+                <th class="th-sm">Reviewer
                 </th>
                 <th class="th-sm">Rating
                 </th>
@@ -174,7 +192,31 @@
             </tbody>
         </table>
     </section>
-
-
+    {% if recom %}
+        <section id="sim">
+            <br/> <br/> <br/>
+            <h2>Similar Books</h2>
+            <br/> <br/> <br/>
+            <table id="dtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+                <thead>
+                <tr>
+                    <th class="th-sm">Cover
+                    </th>
+                    <th class="th-sm">Title
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for xbook in recom %}
+                    {% set title, image, b_id = xbook %}
+                    <tr>
+                        <td><img src='{{ image }}' width="100px"></td>
+                        <td><a style="font-size:16pt; color: black; margin-left: 2vw" href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
 {% endblock %}
 

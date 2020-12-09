@@ -2,6 +2,7 @@ import cx_Oracle as cx
 import time
 from flask_bcrypt import check_password_hash, generate_password_hash
 import dbutils
+import pandas as pd
 
 """"
 with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -70,6 +71,22 @@ def check_username_password(username, password):
     return flag
 
 
+def update_password(username, old_password, new_password):
+    if check_username_password(username, old_password):
+        try:
+            with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                            encoding="UTF-8") as con:
+                cur = con.cursor()
+                cur.execute('UPDATE READER SET PASSWORD_HASH = :1 '
+                            'WHERE USERNAME = :2', [generate_password_hash(new_password), username])
+                con.commit()
+                return True
+        except Exception as e:
+            print('Exception in dbutils2 update_password', e)
+    return False
+
+
+
 def update_password_to_entropy():
     try:
         with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
@@ -83,6 +100,20 @@ def update_password_to_entropy():
             con.commit()
     except Exception as e:
         return 'Hello '+ str(e)
+
+
+def follow_an_author(author_id, reader_id):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            cur.execute('INSERT INTO FOLLOWS (FOLLOWER, FOLLOWED) VALUES (:1, :2)', [reader_id, author_id])
+            print(author_id + " following should be done!")
+            con.commit()
+            return True
+    except Exception as e:
+        print('Exception in follow:', e)
+    return False
 
 
 def wish_or_read(reader_id, book_id, flag = 'r'):
@@ -100,6 +131,22 @@ def wish_or_read(reader_id, book_id, flag = 'r'):
     except Exception as e:
         print('Exception in wish or read:', e)
     return False
+
+
+def check_follow(reader_id, author_id):
+    flag = False
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            for i in cur.execute("SELECT * FROM FOLLOWS WHERE FOLLOWER = :1 AND FOLLOWED = :2"
+                    , [reader_id, author_id]):
+                flag = True
+            print(str(flag) + ", follow-check should be done!")
+            con.commit()
+    except Exception as e:
+        print('Exception in check_follow:', e)
+    return flag
 
 
 def check_wish_read_or_eval(reader_id, book_id, mode ='r'):
@@ -277,3 +324,110 @@ def admin_add_book_db(authors, genres, TITLE, PUBLICATION_DATE, ISBN, LANGUAGE, 
     except Exception as e:
         print('Exception in admin_add_book_db: ', e)
         return False
+
+
+def substr_search(x):
+    x = '%%' + str(x).lower() + '%%'
+    ret = dict()
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret['books'] = list()
+            ret['authors'] = list()
+            ret['readers'] = list()
+            ret['publishers'] = list()
+            for r in cur.execute("""
+                SELECT BOOK_ID, TITLE FROM BOOK WHERE LOWER(TITLE) LIKE :1 
+                    ORDER BY TITLE 
+                            """, [x]):
+                ret['books'] += [r]
+            for r in cur.execute("""
+                SELECT AUTHOR_ID, FULL_NAME FROM AUTHOR INNER JOIN PERSON P on P.PERSON_ID = AUTHOR.AUTHOR_ID
+                    WHERE lower(FULL_NAME) LIKE :1 
+                    ORDER BY FULL_NAME 
+                            """, [x]):
+                ret['authors'] += [r]
+            for r in cur.execute("""
+                SELECT READER_ID, FULL_NAME FROM READER INNER JOIN PERSON P on P.PERSON_ID = READER.READER_ID
+                    WHERE lower(FULL_NAME) LIKE :1
+                    ORDER BY FULL_NAME 
+                            """, [x]):
+                ret['readers'] += [r]
+            for r in cur.execute("""
+                SELECT PUBLISHER_ID, PUBLISHER_NAME FROM PUBLISHER WHERE lower(PUBLISHER_NAME) LIKE :1
+                     ORDER BY PUBLISHER_NAME     """, [x]):
+                ret['publishers'] += [r]
+            keys = ret.keys()
+            for x in keys:
+                if len(ret[x]) == 0:
+                    ret[x] = False
+    except Exception as e:
+        print('An exception in substring search:', x, ' ', e)
+    return ret
+
+
+def comments_for_book_id(b_id):
+    ret = dict()
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret['comments'] = list()
+            cur.execute("""SELECT COMMENT_TEXT, USERNAME, IMAGE_URL
+                            , COMMENT_ID, TO_CHAR(TIME, 'HH24:MI DD-MM-YYYY') T
+                            FROM COMMENT_THREAD INNER JOIN PERSON ON PERSON_ID = READER_ID
+                                INNER JOIN READER R2 on PERSON.PERSON_ID = R2.READER_ID
+                            WHERE BOOK_ID = :1 AND PARENT_COMMENT IS NULL ORDER BY TIME DESC""", [b_id])
+            records = cur.fetchall()
+            for r in records:
+                replies = list()
+                for j in cur.execute("""SELECT COMMENT_TEXT, USERNAME, IMAGE_URL
+                                        , TO_CHAR(TIME, 'HH24:MI DD-MM-YYYY') T
+                                        FROM COMMENT_THREAD INNER JOIN PERSON ON PERSON_ID = READER_ID
+                                            INNER JOIN READER R2 on PERSON.PERSON_ID = R2.READER_ID
+                                        WHERE PARENT_COMMENT = :1 ORDER BY TIME""", [r[3]]):
+                    replies.append((j[0], j[1], j[2], j[3]))
+                replies = tuple(replies)
+                ret['comments'] += [(r[0], replies, r[1], r[2], r[4], str(r[3]))]
+                # print(ret['comments'][-1])
+            for r in cur.execute('SELECT TITLE, IMAGE_URL FROM BOOK WHERE BOOK_ID = :1', [b_id]):
+                ret['title'] = r[0]
+                ret['image'] = r[1]
+                print(ret['title'])
+            ret['replies'] = list()
+
+    except Exception as e:
+        print('An exception in comment for book id ', b_id, ': ', e)
+        ret = None
+    return ret
+
+
+def insert_comment(text, b_id, r_id, par_id = '', ctime = time.strftime('%Y-%m-%d %H:%M:%S')):
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            cur.execute('''INSERT INTO COMMENT_THREAD (COMMENT_TEXT, PARENT_COMMENT, BOOK_ID, READER_ID, TIME) VALUES 
+                            (:1, :2, :3, :4, to_timestamp(:5, 'YYYY-MM-DD HH24:MI:SS'))''', [text, par_id, b_id, r_id, ctime])
+            con.commit()
+            return True
+    except Exception as e:
+        print('An exception in commenting', b_id, ': ', e)
+    return False
+
+
+def authors_following(r_id):
+    ret = dict()
+    try:
+        with cx.connect('ZOIN', 'ZOIN', dsn=cx.makedsn('localhost', 1521, None, 'ORCL'),
+                        encoding="UTF-8") as con:
+            cur = con.cursor()
+            ret['fols'] = list()
+            for r in cur.execute("SELECT FOLLOWED FROM FOLLOWS WHERE FOLLOWER = :1", [r_id]):
+                ret['fols'].append(r[0])
+            print(ret['fols'])
+            return ret
+    except Exception as e:
+        print('An exception in retrieving the followed', r_id, ': ', e)
+    return None

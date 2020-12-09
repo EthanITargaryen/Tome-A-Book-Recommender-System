@@ -9,5 +9,12 @@ h1 {
 
 /* mouse over link */
 a:hover {
-  color: hotpink;
+    background-color: #0b5b97 !important;
+    color: orange !important;
+}
+
+.blank_row
+{
+    height: 20px !important; /* overwrites any other rules */
+    background-color: #FFFFFF;
 }

@@ -44,4 +44,11 @@ class AdminBookForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
+class PasswordUpdateForm(FlaskForm):
+    old_password = PasswordField("Old Passowrd", validators=[DataRequired()])
+    new_password = PasswordField("New Password", validators=[DataRequired()])
+    rep_password = PasswordField("Repeat New Password"
+                                 , validators=[EqualTo('new_password', message='Passwords must match')])
+    submit = SubmitField("Submit")
+
 # class Comment

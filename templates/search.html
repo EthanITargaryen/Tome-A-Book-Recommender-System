@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Search
+{% endblock %}
+
+{% block more_nav %}
+    <li class="nav-item">
+        <a href=#books class="nav-item nav-link px-3"> Books </a>
+    </li>
+
+    <li class="nav-item">
+        <a href=#authors class="nav-item nav-link px-3"> Authors </a>
+    </li>
+
+    <li class="nav-item">
+        <a href=#readers class="nav-item nav-link px-3"> Readers </a>
+    </li>
+
+    <li class="nav-item">
+        <a href=#publishers class="nav-item nav-link px-3"> Publishers </a>
+    </li>
+{% endblock %}
+
+{% block page_content %}
+    <br/> <br/>
+    <h3>Search</h3>
+    <form class="form-inline my-2 my-lg-0">
+        <input id="Search" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search"
+               name="Search" style="width: 450px">
+        <button class="btn btn-outline-success my-2 my-sm-0"
+                formmethod="post" type="submit">Search
+        </button>
+    </form>
+
+    <br/> <br/>
+
+    <section id="books">
+        <br/> <br/> <br/> <br/>
+        <h3>Books</h3> <br/>
+        {% if books %}
+            <ul class="list-group">
+                {% for book in books %}
+                    {% set brs_id, name = book %}
+                    <li class="list-group-item">
+                        <a href={{ url_for('book', brs_id = brs_id) }}>{{ name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <h4> No relevant match</h4>
+        {% endif %}
+        <br/><br/>
+    </section>
+
+    <section id="authors">
+        <br/> <br/> <br/> <br/>
+        <h3>Authors</h3> <br/>
+        {% if authors %}
+            <ul class="list-group">
+                {% for book in authors %}
+                    {% set brs_id, name = book %}
+                    <li class="list-group-item">
+                        <a href={{ url_for('author', brs_id = brs_id) }}>{{ name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <h4> No relevant match</h4>
+        {% endif %}
+        <br/><br/>
+    </section>
+
+
+    <section id="readers">
+        <br/> <br/> <br/> <br/>
+        <h3>Readers</h3> <br/>
+        {% if readers %}
+            <ul class="list-group">
+                {% for book in readers %}
+                    {% set brs_id, name = book %}
+                    <li class="list-group-item">
+                        <a href={{ url_for('reader', brs_id = brs_id) }}>{{ name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <h4> No relevant match</h4>
+        {% endif %}
+        <br/><br/>
+    </section>
+
+
+    <section id="publishers">
+        <br/> <br/> <br/> <br/>
+        <h3>Publishers</h3> <br/>
+        {% if publishers %}
+            <ul class="list-group">
+                {% for book in publishers %}
+                    {% set brs_id, name = book %}
+                    <li class="list-group-item">
+                        <a href={{ url_for('publisher', brs_id = brs_id) }}>{{ name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <h4> No relevant match</h4>
+        {% endif %}
+        <br/><br/>
+    </section>
+
+{% endblock %}

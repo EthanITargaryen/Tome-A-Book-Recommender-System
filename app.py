@@ -4,8 +4,7 @@ from flask_mail import Mail, Message
 from flask_login import UserMixin, LoginManager, login_required, login_user, logout_user
 from flask_bcrypt import Bcrypt
 from functools import wraps
-import pandas as pd
-import cx_Oracle as cx
+import numpy as np
 import os
 import formdir
 from dbutils import *
@@ -141,13 +140,17 @@ def register():
     return render_my_template('clib/register.html')
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def m_about():
     global recommender
-    if 'recommender' not in globals():
-        print('Not in globals')
-        recommender = MyRecommender()
-    return render_my_template('home.html')
+    if request.method == 'GET':
+        if 'recommender' not in globals():
+            print('Not in globals')
+            recommender = MyRecommender()
+        return render_my_template('home.html')
+    else:
+        key = request.form.get('Search')
+        return redirect(url_for('search_with_key', key=key))
 
 
 @app.route('/wert')
@@ -171,17 +174,20 @@ def author(brs_id):
             print(b_ret.get('book_id'))
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
+        fol = check_follow(session.get('id'), brs_id)
         if ret is not None:
-            return render_my_template("author.html", books=books, author_id=ret['author_id'], gender=ret['gender']
-                                      , hometown=ret['hometown'], dob=ret['dob']
-                                      , name=ret['name'], about=ret['about'], image=ret['image'], skipbar=False)
+            return render_my_template("author.html", books=books, author_id=ret['author_id']
+                                      , gender=ret['gender'], hometown=ret['hometown'], dob=ret['dob']
+                                      , follow = fol, no_books=ret['no_books'], name=ret['name']
+                                      , about=ret['about'], image=ret['image'], fol=ret['fol']
+                                      , skipbar=False)
     except Exception as e:
         return str(e)
     return "BRS!"
 
 
 @app.route('/reader/<brs_id>')
-def reader(brs_id):
+def reader(brs_id, is_self=False):
     try:
         if str(brs_id).isnumeric() or str(brs_id)[1:].isnumeric():
             ret = info_for_reader_id(brs_id)
@@ -198,13 +204,14 @@ def reader(brs_id):
             # print(b_ret.get('book_id'))
             books.append(tuple((b_ret.get('title'), b_ret.get('image'), b_ret.get('book_id'))))
         print(books)
+        is_self = (session.get('id') == brs_id)
         evals = []
         for eval_id in ret['eval']:
             eval_ret = info_for_eval_id(eval_id)
             evals.append(tuple((eval_ret.get('title'), eval_ret.get('image'), eval_ret.get('book_id'),
                                 eval_ret.get('rating'), eval_ret.get('review'))))
         if ret is not None:
-            return render_my_template("reader.html", evals=evals, books=books, **ret)
+            return render_my_template("reader.html", evals=evals, books=books, is_this_self=is_self, **ret)
     except Exception as e:
         return str(e)
     return "BRS!"
@@ -318,7 +325,24 @@ def ad_index():
     return render_template('admin/index.html')
 
 
+@app.route('/search/<key>', methods=['GET', 'POST'])
+def search_with_key(key):
+    if request.method == 'GET':
+        ret = substr_search(key)
+        return render_my_template('search.html', **ret)
+    else:
+        key = request.form.get('Search')
+        ret = substr_search(key)
+        return render_my_template('search.html', **ret)
+
+
 # New Add here
+@app.route('/follow_author/<a_id>')
+@my_login_required
+def follows(a_id):
+    if follow_an_author(a_id, session.get('id')):
+        flash("You are already following the author")
+    return redirect(url_for("author", brs_id=a_id))
 
 
 @app.route('/wishes/<b_id>')
@@ -350,6 +374,7 @@ def evals(b_id):
 @app.route('/evaluate/<b_id>', methods=['GET', 'POST'])
 @my_login_required
 def evaluated(b_id):
+    global recommender
     try:
         if str(b_id).isnumeric():
             ret = info_for_book_id(b_id)
@@ -357,6 +382,7 @@ def evaluated(b_id):
             ret = info_for_book_title(b_id)
         b_id = ret['book_id']
         title = ret['title']
+        image = ret['image']
         form = formdir.EvaluationForm()
         if request.method == 'POST':
             if form.validate_on_submit():
@@ -365,11 +391,23 @@ def evaluated(b_id):
                 print("x: ", x)
                 print("y: ", y)
                 if insert_evaluation(session.get('id'), b_id, x, y) or None:
+                    try:
+                        if recommender:
+                            x_update = pd.DataFrame({
+                                'user_id': [int(session.get('id'))], 'item_id': [int(b_id)]
+                            })
+                            y_update = np.array([int(x)])
+                            recommender.matrix_fact.update_users(
+                                x_update, y_update, lr=0.001, n_epochs=20, verbose=0
+                            )
+                            print('Recommender should be updated.')
+                    except Exception as e:
+                        print('Recommender has not been updated. Error:', e)
                     flash("Evaluation Done!")
                     return redirect(url_for('book', brs_id=b_id))
                 else:
                     flash("Something went wrong!")
-        return render_my_template('eval.html', form=form, title=title)
+        return render_my_template('eval.html', form=form, title=title, image=image)
     except Exception as e:
         return str(e)
     return 'Brs!'
@@ -389,10 +427,69 @@ def recommend_me():
     return render_my_template('genre.html', name='Recommendation for ' + str(session.get('username')), books=books)
 
 
+@app.route('/following')
+@my_login_required
+def following_authors():
+    try:
+        ret = authors_following(session.get('id'))
+        authors = []
+        for a_id in ret['fols']:
+            a_ret = info_for_author_id(a_id)
+            authors.append(tuple((a_ret.get('name'), a_ret.get('image'), a_ret.get('author_id'))))
+        return render_my_template('genre.html', follow_authors=True, books=authors)
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/comment/<brs_id>', methods=['GET', 'POST'])
+@my_login_required
+def comment_on_book(brs_id):
+    x = brs_id
+    try:
+        print("Request form keys:")
+        for k in request.form.keys():
+            print(k, request.form.get(k), end=' ')
+
+        print('\nInit ', end='')
+        print("BRS: ", brs_id)
+        if request.method == 'POST':
+            print("Second BRS:", brs_id )
+            if request.form.get('comment'):
+                text = request.form.get('comment')
+                if insert_comment(text, brs_id, session.get('id')):
+                    print("Inserted, text")
+            elif request.form.get('reply'):
+                text = request.form.get('reply')
+                if insert_comment(text, brs_id, session.get('id'), par_id=request.form.get('c_id')):
+                    print("Inserted, text")
+            print("Third BRS:", x)
+            # return redirect(url_for('comment_on_book', brs_id=x))
+        print("BRS: ", brs_id)
+        ret = comments_for_book_id(brs_id)
+        print(ret)
+        return render_my_template('comment_temp.html', **ret)
+    except Exception as e:
+        return str(e)
+
+
 @app.route('/self')
 @my_login_required
 def self_name():
     return str(session.get('username'))
+
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@my_login_required
+def pw_change():
+    form = formdir.PasswordUpdateForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if update_password(session.get('username'), form.old_password.data, form.new_password.data):
+                flash("Password updated successfully!")
+                return redirect(url_for('reader', brs_id=session.get('id')))
+            else:
+                flash("Password was not updated.")
+    return render_my_template('pwupdate.html', form=form)
 
 
 @app.route('/signout')

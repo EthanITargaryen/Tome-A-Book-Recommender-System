@@ -1,5 +1,5 @@
 {% extends "bootstrap/base.html" %}
-{% block title %}BRS{% endblock %}
+{% block title %}Tome{% endblock %}
 {% block navbar %}
     <nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark">
         <!-- Navbar content -->
@@ -13,20 +13,19 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="/">BRS</a>
+                <a class="navbar-brand" href="/">Tome</a>
             </div>
             <div class="navbar-collapse collapse nav-justified">
-                <ul class="navbar-nav mr-auto">
-
+                <ul class="navbar-nav mr-auto" onmouseover="">
                     <li class="nav-item">
-                        <a href="/" class="nav-item nav-link px-3">Home</a></li>
+                        <a href="/" class="nav-item nav-link">Home</a></li>
                     {% block more_nav %}{% endblock %}
                 </ul>
                 <ul class="navbar-nav navbar-right media-right"
                     style="margin-left:auto; margin-right: 0">
 
                     {% if admin_privileges %}
-                        <li class="nav-item">
+                        <li class="nav-item" >
                             <a href='/adminstrator_add_author' class="nav-item nav-link" style="width: 100px">Add
                                 Author</a>
                         </li>
@@ -36,9 +35,16 @@
                         </li>
                     {% elif id %}
                         <li class="nav-item">
-                            <a class="nav-item nav-link" style="width: 90px" href={{ url_for('reader', brs_id = id) }}>
-                                Self
-                                Profile </a>
+                            <a class="nav-item nav-link" style="width: 180px" href={{ url_for('recommend_me') }}>
+                                Recommend me books </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-item nav-link" style="width: 180px" href={{ url_for('following_authors') }}>
+                                Authors I'm following </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-item nav-link" style="width: 90px" href={{ url_for('reader', brs_id = id, is_self=True) }}>
+                                My Profile </a>
                         </li>
                     {% endif %}
 
@@ -74,4 +80,9 @@
     {{ super() }}
     <link rel="stylesheet"
           href="{{ url_for('.static', filename='demo.css') }}">
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <link rel="script" href="{{ url_for('.static', filename='table_pagination.js') }}">
 {% endblock %}

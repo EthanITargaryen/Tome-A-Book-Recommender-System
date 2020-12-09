@@ -6,7 +6,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-{{ name }}
+    {{ name }}
 {% endblock %}
 
 {% block more_nav %}
@@ -18,24 +18,37 @@
 
 {% block page_content %}
 
-    <br/>
+    <div type="row">
+        <div type="col"><br/>
+            <p style="font-size: 30pt"> {{ name | safe }}</p>
+        </div>
+        {% if id %}
+            <div type="col" align="right">
+                {% if follow %}
+                    <button class="btn btn-success"> Following</button>
+                {% endif %}
+                {% if not follow %}
+                    <a role="button" class="btn btn-primary" href={{ url_for('follows', a_id = author_id) }}>
+                        Follow </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
 
-    <h1> {{ name }}</h1>
-
-    <br/> <br/> <br/>
+    <br/> <br/>
 
     <section class="about" data-aos="fade-up" style="margin-bottom: 200px">
         <div class="container">
 
             <div class="row">
                 <div class="col-lg-6">
-                    <img src={{ image }} class="img-fluid" alt="">
+                    <img src='{{ image }}' class="img-fluid" alt="">
                 </div>
                 <div class="col-lg-6 pt-4 pt-lg-0">
                     {{ about | safe }}
                     <br/> <br/> <br/>
                     <div>
-                        <table class="table table-borderless table-hover">
+                        <table class="table table-hover" style="table-border-color-dark: #9fcdff">
                             <tbody>
                             <tr>
                                 <th scope="row">Hometown</th>
@@ -49,6 +62,14 @@
                                 <th scope="row">Gender</th>
                                 <td>{{ gender }}</td>
                             </tr>
+                            <tr>
+                                <th scope="row">No of Books</th>
+                                <td>{{ no_books }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">No of Followers</th>
+                                <td>{{ fol }}</td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>
@@ -60,6 +81,7 @@
 
     <br/>
     <section id="books">
+        <br/> <br/> <br/>
 
         <h2>Books of {{ name }}</h2>
         <br/> <br/> <br/>
@@ -76,8 +98,8 @@
             {% for xbook in books %}
                 {% set title, image, b_id = xbook %}
                 <tr>
-                    <td><img src={{ image }} width="100px"></td>
-                    <td><a href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
+                    <td width="150px"><img src='{{ image }}' width="100px"></td>
+                    <td><a style="font-size:16pt; color: black" href={{ url_for('book', brs_id=b_id) }}> {{ title }}</a></td>
                 </tr>
             {% endfor %}
             </tbody>

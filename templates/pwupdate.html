@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+div {
+  max-width: 500px;
+  height: 100px;
+  background-color: powderblue;
+}
+
+{% block title %}Password change{% endblock %}
+{% block page_content %}
+    <br/> <br/> <h2>Update Password</h2> <br/>
+
+    <div class="page-header" style="width: 650px; font-size: 13pt">
+        {{ wtf.quick_form(form) }}
+    </div>
+{% endblock %}

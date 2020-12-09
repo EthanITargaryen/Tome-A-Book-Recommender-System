@@ -1,32 +1,85 @@
 {% extends 'base.html' %}
 
-{% block page_content %}
+{% block more_nav %}
+    <li class="nav-item">
+        <a class="nav-item nav-link px-3" href={{ url_for('book', brs_id=title) }}> Book </a>
+    </li>
+{% endblock %}
 
-    <div class="row" style="width: 80vw">
-        <div class="col">
-            <img style="width: 100px" src= {{ image }}>
-        </div>
-        <div class="col" style="alignment: center"> {{ title }}
-        </div>
-    </div>
-    {% for cmt in comments %}
-    {% set text, replies, username, userimage = cmt %}
-    <div class="row">
-        <div class="col">
-            <img style="width: 100px" src= {{ image }}>
-        </div>
-        <div class="col" style="alignment: center"> {{ text }}
-        </div>
-        <div class="row" style="margin-left: 15vw">
+{% block page_content %}
+    <br/> <br/> <br/>
+    <table>
+        <tr style="border-spacing: 5vw">
+            <td>
+                <img style="width: 8vw" src= {{ image }}>
+            </td>
+        </tr>
+        <tr class="blank_row"></tr>
+        <tr>
+            <td><br/> <br/> Comments on <br/>
+                <a href={{ url_for('book', brs_id = title) }}><h4> {{ title }} </h4></a>
+            </td>
+        </tr>
+    </table>
+    <br/> <br/> <br/>
+    <table class="table table-striped">
+        <tbody>
+        <tr>
+            <td colspan="4">
+                <form class="form-inline my-2 my-lg-0">
+                    <input id="comment" class="form-control mr-sm-2" type="text"
+                           placeholder="Comment ..." aria-label="comment"
+                           name="comment" style="width: 450px">
+                    <button class="btn btn-outline-success my-2 my-sm-0"
+                            formmethod="post" type="submit"> Submit
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% for cmt in comments %}
+            {% set text, replies, username, userimage, comtm, c_id = cmt %}
+            <tr class="row">
+            <tr>
+                <td style="width: 10vw">
+                    <img style="width: 100px" src= {{ userimage }}>
+                    <a href={{ url_for('reader', brs_id = username) }}>{{ username }}</a>
+                </td>
+                <td colspan="2">
+                    <b>{{ comtm }}</b> <br/> {{ text }}
+                </td>
+            </tr>
             {% for reps in replies %}
-                {% set rtext, rname, rimage = reps %}
-                <div class="col">
-                    <img style="width: 100px" src= {{ image }}>
-                </div>
-                <div class="col" style="alignment: center"> {{ text }}
-                </div>
+                <tr>
+                    {% set rtext, rname, rimage, rtm = reps %}
+                    <td></td>
+                    <td style="width: 10vw">
+                        <img style="width: 100px" src= {{ rimage }}>
+                        <a href={{ url_for('reader', brs_id = rname) }}>{{ rname }}</a>
+                    </td>
+                    <td>
+                        <b>{{ rtm }}</b> <br/> {{ rtext }}
+                    </td>
+                </tr>
             {% endfor %}
-        </div>
-    </div>
+            {% set i_id = 'reply ' + c_id %}
+            <tr>
+                <td></td>
+                <td colspan="3">
+                    <form class="form-inline my-2 my-lg-0">
+                        <input class="form-control mr-sm-2" type="text"
+                               placeholder="Reply ..." aria-label="reply"
+                               style="width: 450px" id='reply' name="reply">
+                        <input type="text" style="width:0px; display: none;  fill: #c3e6cb; color: #c3e6cb" name="c_id" id="c_id" value={{ c_id }}>
+                        <button class="btn btn-outline-success my-2 my-sm-0"
+                                formmethod="post" type="submit"> Submit
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            <tr class="blank_row"></tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
 
 {% endblock %}

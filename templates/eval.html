@@ -9,12 +9,19 @@ div {
 
 {% block title %}Evaluation{% endblock %}
 {% block page_content %}
+    <br/> <br/> <br/>
+    <table>
+        <tr style="border-spacing: 5vw">
+            <td>
+                <img style="width: 8vw" src= {{ image }}>
+            </td>
+            <td style="width: 7vw"> </td>
+            <td><br/> <br/> <p style="font-size: 18pt;"> You are evaluating </p>
+                <a href={{ url_for('book', brs_id = title) }}><p style="font-size: 30pt;" > {{ title }} </p></a>
+            </td>
+        </tr>
+    </table>
     <br/>
-    <h5>You're evaluating</h5>
-    <h1><a style="text-decoration: None; color: black;" onmouseover="this.style.backgroundColor='#006db9'"
-                       onmouseout="this.style.backgroundColor=''"
-                       href={{ url_for('book', brs_id = title) }}> {{ title }} </a></h1>
-    <br/> <br/>
     <div class="page-header" style="width: 650px; font-size: 13pt">
         {{ wtf.quick_form(form) }}
     </div>
